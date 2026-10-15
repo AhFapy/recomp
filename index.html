@@ -134,6 +134,41 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
 .check.auto .box{border-style:dashed}
 .check.auto.on .box{background:var(--brand);border:1.5px solid var(--brand)}
 .check.auto.on .box svg{opacity:1;stroke:#f5f4ef}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;border:1px solid var(--line-strong);border-radius:999px;padding:3px}
+.tabs button{min-height:42px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:500 15px var(--f-sans);cursor:pointer;transition:background .18s var(--ease),color .18s var(--ease)}
+.tabs button[aria-selected="true"]{background:var(--cta-bg);color:var(--cta-fg)}
+.vista{display:flex;flex-direction:column;gap:20px}
+.periodo{display:flex;gap:6px;flex-wrap:wrap}
+.periodo button{min-height:40px;padding:0 14px;border:1px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--ink);font:500 14px var(--f-sans);cursor:pointer}
+.periodo button[aria-pressed="true"]{background:var(--cta-bg);color:var(--cta-fg);border-color:var(--cta-bg)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .v{font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi .s b{font-weight:500;color:var(--ink)}
+@media (max-width:600px){.kpi .v{font-size:22px}.kpi:last-child:nth-child(odd){grid-column:1/-1}}
+.kpi.ok .v{color:var(--brand)} .kpi.mal .v{color:var(--bad)}
+.embudo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.paso{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.paso:first-child{border-top:0}
+.paso .fila{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.paso .n{font-weight:600;font-variant-numeric:tabular-nums}
+.paso .n small{font-weight:400;color:var(--muted);margin-left:6px}
+.paso .barra{height:22px;background:var(--line);border-radius:6px;overflow:hidden}
+.paso .barra i{display:block;height:100%;background:var(--brand);border-radius:6px;transition:width .4s var(--ease)}
+.paso .conv{font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;color:var(--muted)}
+.paso.fuga-max .barra i{background:var(--bad)}
+.paso.fuga-max .conv{color:var(--bad)}
+.fuga{margin:0;font-size:14px;color:var(--muted)}
+.fuga b{color:var(--ink);font-weight:600}
+.cierre{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.cierre .big2{font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.medias{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.medias div{display:flex;flex-direction:column;gap:2px}
+.medias .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.medias .s{font-size:12px;color:var(--muted)}
+.chart{width:100%;height:auto;display:block}
+.vacio{margin:0;color:var(--muted);font-size:14px}
 .offline{border:1px solid var(--warn);color:var(--warn);border-radius:var(--r-md);padding:10px 12px;font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -164,6 +199,12 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
 
   <p class="offline" id="offline" hidden>No se pudo conectar. Revisa la conexión y recarga.</p>
 
+  <div class="tabs" role="tablist" aria-label="Vista">
+    <button type="button" role="tab" id="t-hoy" data-v="hoy" aria-selected="true">Hoy</button>
+    <button type="button" role="tab" id="t-embudo" data-v="embudo" aria-selected="false">Embudo</button>
+  </div>
+
+  <div id="v-hoy" class="vista">
   <section class="estado" aria-live="polite">
     <div class="label">Cómo vas</div>
     <div class="big" id="estado">Sin datos aún</div>
@@ -242,6 +283,35 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
       </form>
     </div>
   </details>
+  </div>
+
+  <div id="v-embudo" class="vista" hidden>
+    <div class="periodo" role="group" aria-label="Periodo">
+      <button type="button" data-d="7" aria-pressed="true">7 días</button>
+      <button type="button" data-d="30" aria-pressed="false">30 días</button>
+      <button type="button" data-d="0" aria-pressed="false">Desde el inicio</button>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="card">
+      <div class="card-head"><h2>Embudo de días</h2><span class="label num" id="fRango"></span></div>
+      <p class="fuga" id="fuga"></p>
+      <ol class="embudo" id="embudo"></ol>
+      <div class="cierre" id="cierre"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Peso vs plan</h2></div>
+      <div id="grafico"></div>
+      <p class="tiny">Línea discontinua: el ritmo que toca para llegar al objetivo en la fecha.</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Medias del periodo</h2></div>
+      <div class="medias" id="medias"></div>
+    </section>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
@@ -352,7 +422,15 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 
 /* ---------- render ---------- */
 const SVG='<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+let vista='hoy', dias=7;
+try{const v=localStorage.getItem('recomp.vista');if(v==='hoy'||v==='embudo')vista=v;const d=+localStorage.getItem('recomp.dias');if([0,7,30].includes(d)&&localStorage.getItem('recomp.dias')!==null)dias=d}catch(e){}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{vista=b.dataset.v;try{localStorage.setItem('recomp.vista',vista)}catch(e){}render();window.scrollTo(0,0)}));
+document.querySelectorAll('.periodo button').forEach(b=>b.addEventListener('click',()=>{dias=+b.dataset.d;try{localStorage.setItem('recomp.dias',String(dias))}catch(e){}render()}));
+
 function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===vista)));
+  $('v-hoy').hidden=vista!=='hoy'; $('v-embudo').hidden=vista!=='embudo';
+  if(vista==='embudo'){document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.p===perfil)));renderEmbudo();return}
   document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.p===perfil)));
   const e=estado(), t=hoy(), d=state.dias[t]||{}, h=d.hechos||[];
   const el=$('estado'); el.textContent='';
@@ -403,6 +481,150 @@ function render(){
     :'<p style="margin:0;color:var(--muted);font-size:14px">Sin escaneos todavía.</p>';
   renderComida();
 }
+/* ---------- embudo ---------- */
+const pctTxt=x=>Math.round(x*100)+' %';
+const kg=(n,signo)=>(signo&&n>0?'+':'')+fmt(n)+' kg';
+function rangoPeriodo(){
+  const t=hoy(), o=state.obj||{};
+  let ini;
+  if(dias>0) ini=addDays(t,-(dias-1));
+  else { const fechas=[o.fecha_inicio,...Object.keys(state.dias),...state.meds.map(m=>m.fecha)].filter(Boolean).sort(); ini=fechas[0]||t; }
+  if(o.fecha_inicio&&dias>0&&ini<o.fecha_inicio) ini=o.fecha_inicio;
+  return {ini,fin:t};
+}
+/* Pendiente en kg/semana por mínimos cuadrados. Null si no hay base. */
+function ritmo(ps){
+  if(ps.length<2) return null;
+  const x0=ps[0].fecha, xs=ps.map(p=>diffDays(x0,p.fecha)), ys=ps.map(p=>p.peso);
+  if(xs[xs.length-1]-xs[0]<6) return null;
+  const n=xs.length, mx=xs.reduce((a,b)=>a+b)/n, my=ys.reduce((a,b)=>a+b)/n;
+  let num=0,den=0; for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)**2}
+  return den?num/den*7:null;
+}
+function renderEmbudo(){
+  document.querySelectorAll('.periodo button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.d===dias)));
+  const o=state.obj||{}, {ini,fin}=rangoPeriodo();
+  const listaDias=[]; for(let f=ini;f<=fin;f=addDays(f,1)) listaDias.push(f);
+  $('fRango').textContent=`${fechaCorta(ini)} → ${fechaCorta(fin)}`;
+
+  /* Cada paso exige el anterior: un embudo de verdad, no hábitos sueltos. */
+  const pasos=[
+    {t:'Días del periodo',ok:()=>true},
+    {t:'Días con algo apuntado',ok:d=>!!d&&((d.hechos||[]).length||(d.comidas||[]).length||d.peso!=null)},
+    {t:'Comida apuntada',ok:d=>(d.comidas||[]).length>0},
+    {t:'Proteína cubierta',ok:d=>AUTOS[0].ok(d,o)},
+    {t:'Calorías dentro',ok:d=>AUTOS[1].ok(d,o)},
+    {t:'10.000 pasos',ok:d=>(d.hechos||[]).includes('caminar')},
+    {t:'7 horas de sueño · día perfecto',ok:d=>(d.hechos||[]).includes('sueno')},
+  ];
+  let vivos=listaDias.slice(); const cuentas=[];
+  for(const p of pasos){ vivos=vivos.filter(f=>p.ok(state.dias[f])); cuentas.push(vivos.length); }
+  const total=cuentas[0]||1;
+  let peor=-1, peorConv=2;
+  for(let i=1;i<cuentas.length;i++){ if(cuentas[i-1]>0){const c=cuentas[i]/cuentas[i-1]; if(c<peorConv){peorConv=c;peor=i}} }
+  const ol=$('embudo'); ol.textContent='';
+  pasos.forEach((p,i)=>{
+    const li=document.createElement('li'); li.className='paso'+(i===peor&&peorConv<1?' fuga-max':'');
+    const fila=document.createElement('div'); fila.className='fila';
+    const t=document.createElement('span'); t.textContent=p.t;
+    const n=document.createElement('span'); n.className='n'; n.textContent=cuentas[i];
+    const sm=document.createElement('small'); sm.textContent=pctTxt(cuentas[i]/total); n.appendChild(sm);
+    fila.append(t,n);
+    const barra=document.createElement('div'); barra.className='barra'; const bi=document.createElement('i'); bi.style.width=(cuentas[i]/total*100)+'%'; barra.appendChild(bi);
+    li.append(fila,barra);
+    if(i>0){const c=document.createElement('div'); c.className='conv'; c.textContent=cuentas[i-1]?`Conversión desde el paso anterior: ${pctTxt(cuentas[i]/cuentas[i-1])}`:'Conversión: —'; li.appendChild(c)}
+    ol.appendChild(li);
+  });
+  const fuga=$('fuga'); fuga.textContent='';
+  if(cuentas[1]===0){fuga.textContent='Todavía no hay días apuntados en este periodo.'}
+  else if(peor>0&&peorConv<1){
+    fuga.append('Donde más se pierde: ');
+    const b=document.createElement('b'); b.textContent=`${pasos[peor-1].t.toLowerCase()} → ${pasos[peor].t.toLowerCase()}`; fuga.appendChild(b);
+    fuga.append(`, solo pasa el ${pctTxt(peorConv)} de los días.`);
+  } else fuga.textContent='Ningún paso pierde días en este periodo.';
+
+  /* Cierre: lo que ha bajado frente a lo que tocaba. */
+  const ps=pesos(), enRango=ps.filter(p=>p.fecha>=ini&&p.fecha<=fin);
+  const antes=ps.filter(p=>p.fecha<ini).pop();
+  const desde=antes||enRango[0], hasta=enRango[enRango.length-1];
+  const cierre=$('cierre'); cierre.textContent='';
+  const lab=document.createElement('div'); lab.className='label'; lab.textContent='Cierre del periodo'; cierre.appendChild(lab);
+  if(desde&&hasta&&desde!==hasta){
+    const real=hasta.peso-desde.peso;
+    const pDesde=plan(desde.fecha), pHasta=plan(hasta.fecha);
+    const big=document.createElement('div'); big.className='big2'; big.textContent=kg(real,true); cierre.appendChild(big);
+    const sub=document.createElement('div'); sub.className='tiny';
+    if(pDesde!=null&&pHasta!=null&&pHasta<pDesde){
+      const toca=pHasta-pDesde; sub.textContent=`Tocaba ${kg(toca,true)} según el plan → ${pctTxt(Math.max(0,real/toca))} del plan cumplido.`;
+    } else sub.textContent=`Del ${fechaCorta(desde.fecha)} al ${fechaCorta(hasta.fecha)}.`;
+    cierre.appendChild(sub);
+  } else { const p=document.createElement('p'); p.className='vacio'; p.textContent='Hacen falta dos pesos en el periodo para ver cuánto has bajado. Apunta el peso cada lunes.'; cierre.appendChild(p); }
+
+  renderKpis(ps,listaDias); renderGrafico(ps); renderMedias(listaDias);
+}
+function renderKpis(ps,listaDias){
+  const o=state.obj||{}, t=hoy(), ult=ps[ps.length-1];
+  const ult28=ps.filter(p=>p.fecha>=addDays(t,-28));
+  const r=ritmo(ult28.length>=2?ult28:ps.slice(-4));
+  const falta=ult&&o.peso_objetivo!=null?ult.peso-o.peso_objetivo:null;
+  const semanasRest=o.fecha_objetivo?Math.max(0.1,diffDays(t,o.fecha_objetivo)/7):null;
+  const necesario=falta!=null&&semanasRest?-(falta/semanasRest):null;
+  const p=ult?plan(ult.fecha):null, dif=p!=null?ult.peso-p:null;
+  let llegada='—', llegSub='hace falta más histórico de peso';
+  if(r!=null&&falta!=null){ if(falta<=0){llegada='Conseguido';llegSub='objetivo alcanzado'} else if(r<0){const f=addDays(t,Math.round(falta/(-r)*7)); llegada=fechaCorta(f)+' '+parse(f).getFullYear(); llegSub=o.fecha_objetivo?(f<=o.fecha_objetivo?'antes de la fecha objetivo':'después de la fecha objetivo'):''} else {llegada='Sin bajar';llegSub='al ritmo actual no llegas'} }
+  let fz=0; for(const f of listaDias) if((state.dias[f]?.hechos||[]).includes('fuerza')) fz++;
+  const metaFz=Math.max(1,Math.round(listaDias.length/7*3));
+  const k=[
+    {t:'Peso actual',v:ult?fmt(ult.peso)+' kg':'—',s:dif!=null?`<b>${kg(dif,true)}</b> frente al plan`:'apúntalo en Hoy',c:dif==null?'':dif<=0.5?'ok':dif>1.5?'mal':''},
+    {t:'Perdido',v:ult&&o.peso_inicial!=null?kg(ult.peso-o.peso_inicial,true):'—',s:falta!=null?`faltan <b>${fmt(Math.max(0,falta))} kg</b>`:'',c:''},
+    {t:'Ritmo real',v:r!=null?kg(r,true)+'/sem':'—',s:necesario!=null?`toca <b>${kg(necesario,true)}/sem</b>`:'',c:r==null||necesario==null?'':r<=necesario+0.1?'ok':'mal'},
+    {t:'Llegada estimada',v:llegada,s:llegSub,c:''},
+    {t:'Fuerza',v:`${fz}/${metaFz}`,s:'sesiones en el periodo',c:fz>=metaFz?'ok':fz<metaFz*0.6?'mal':''},
+  ];
+  const box=$('kpis'); box.textContent='';
+  for(const x of k){const d=document.createElement('div'); d.className='kpi'+(x.c?' '+x.c:''); d.innerHTML=`<div class="label"></div><div class="v"></div><div class="s"></div>`; d.children[0].textContent=x.t; d.children[1].textContent=x.v; d.children[2].innerHTML=x.s; box.appendChild(d)}
+}
+function renderMedias(listaDias){
+  const o=state.obj||{};
+  const conComida=listaDias.map(f=>state.dias[f]).filter(d=>d&&(d.comidas||[]).length);
+  const media=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  const prot=media(conComida.map(d=>totales(d).p)), kc=media(conComida.map(d=>totales(d).k));
+  const whoop=media([...new Set(listaDias.map(lunes))].map(l=>state.dias[l]?.whoop).filter(v=>v!=null));
+  const tasa=k=>{const n=listaDias.filter(f=>(state.dias[f]?.hechos||[]).includes(k)).length;return listaDias.length?n/listaDias.length:0};
+  const items=[
+    ['Proteína media',prot!=null?Math.round(prot)+' g':'—',`meta ${o.prot_obj||PROT_DEF} g`],
+    ['Calorías medias',kc!=null?Math.round(kc).toLocaleString('es-ES'):'—',`meta ${(o.kcal_obj||KCAL_DEF).toLocaleString('es-ES')}`],
+    ['Días con 10k pasos',pctTxt(tasa('caminar')),'del periodo'],
+    ['Días con 7 h de sueño',pctTxt(tasa('sueno')),'del periodo'],
+    ['Recuperación WHOOP',whoop!=null?Math.round(whoop)+' %':'—','media semanal'],
+  ];
+  const box=$('medias'); box.textContent='';
+  for(const [t,v,s] of items){const d=document.createElement('div'); d.innerHTML='<span class="label"></span><span class="v"></span><span class="s"></span>'; d.children[0].textContent=t; d.children[1].textContent=v; d.children[2].textContent=s; box.appendChild(d)}
+}
+function renderGrafico(ps){
+  const c=$('grafico'), o=state.obj;
+  if(!ps.length&&!o){c.innerHTML='<p class="vacio">Aparecerá cuando apuntes tu peso.</p>';return}
+  const W=600,H=230,L=40,R=14,T=14,B=26;
+  let x0=o?.fecha_inicio||ps[0].fecha, x1=o?.fecha_objetivo||ps[ps.length-1].fecha;
+  for(const p of ps){if(p.fecha<x0)x0=p.fecha;if(p.fecha>x1)x1=p.fecha}
+  if(x0===x1) x1=addDays(x0,30);
+  const vals=ps.map(p=>p.peso); if(o?.peso_inicial!=null)vals.push(o.peso_inicial); if(o?.peso_objetivo!=null)vals.push(o.peso_objetivo);
+  const y0=Math.floor(Math.min(...vals)-2), y1=Math.ceil(Math.max(...vals)+2), span=diffDays(x0,x1)||1;
+  const X=f=>L+(W-L-R)*diffDays(x0,f)/span, Y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peso frente al plan">`;
+  const step=Math.max(1,Math.round((y1-y0)/5));
+  for(let v=y0;v<=y1;v+=step) s+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}</text>`;
+  s+=`<text x="${L}" y="${H-6}" font-size="11" fill="var(--muted)">${fechaCorta(x0)}</text><text x="${W-R}" y="${H-6}" text-anchor="end" font-size="11" fill="var(--muted)">${fechaCorta(x1)}</text>`;
+  const t=hoy(); if(t>x0&&t<x1) s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${T}" y2="${H-B}" stroke="var(--faint)" stroke-dasharray="2 3"/><text x="${X(t)}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)">hoy</text>`;
+  if(o?.peso_inicial!=null&&o?.peso_objetivo!=null&&o.fecha_inicio&&o.fecha_objetivo) s+=`<line x1="${X(o.fecha_inicio)}" y1="${Y(o.peso_inicial)}" x2="${X(o.fecha_objetivo)}" y2="${Y(o.peso_objetivo)}" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  if(ps.length){
+    s+=`<polyline points="${ps.map(p=>X(p.fecha)+','+Y(p.peso)).join(' ')}" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round"/>`;
+    ps.forEach((p,i)=>{const last=i===ps.length-1; s+=`<circle cx="${X(p.fecha)}" cy="${Y(p.peso)}" r="${last?5:3}" fill="var(--brand)" stroke="var(--surface)" stroke-width="2"/>`});
+    const u=ps[ps.length-1]; s+=`<text x="${Math.min(X(u.fecha),W-R-40)}" y="${Y(u.peso)-10}" font-size="12" font-weight="600" fill="var(--ink)">${fmt(u.peso)}</text>`;
+  }
+  c.innerHTML=s+'</svg>';
+}
+
 function totales(d){
   const c=d?.comidas||[]; return c.reduce((a,x)=>({k:a.k+x.k,p:a.p+x.p,c:a.c+x.c,f:a.f+x.f}),{k:0,p:0,c:0,f:0});
 }
@@ -506,7 +728,7 @@ $('medForm').addEventListener('submit',async e=>{
 const n2=v=>v==null?null:Number(v);
 async function cargar(){
   const pedido=uid;
-  const desde=addDays(hoy(),-180);
+  const desde=addDays(hoy(),-400);
   const [d,m,o]=await Promise.all([
     SB.from('recomp_dias').select('fecha,hechos,comidas,peso,whoop').eq('profile_id',uid).gte('fecha',desde),
     SB.from('recomp_mediciones').select('id,fecha,peso,grasa_pct,musculo_kg,visceral').eq('profile_id',uid).order('fecha'),
