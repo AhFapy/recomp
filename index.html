@@ -127,6 +127,7 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
 .opt.added{background:var(--brand-soft)}
 .tiny{margin:0;font-size:12px;color:var(--muted)}
 .row-top{display:flex;align-items:center;gap:8px}
+.top{flex-wrap:wrap}
 .tema{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer}
 .tema svg{width:18px;height:18px}
 .check.auto{cursor:default}
@@ -142,13 +143,7 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
 
 <main class="login" id="login" hidden>
   <div><div class="label">Trud Sales</div><h1>Recomp</h1></div>
-  <p class="why" style="margin:0;color:var(--muted)">Entra con tu cuenta del panel de Trud Sales.</p>
-  <form id="loginForm" style="display:flex;flex-direction:column;gap:10px">
-    <label class="field">Email<input id="l-email" type="email" autocomplete="email" required></label>
-    <label class="field">Contraseña<input id="l-pass" type="password" autocomplete="current-password" required></label>
-    <button class="cta" type="submit" id="l-btn">Entrar</button>
-    <p class="err" id="l-err" aria-live="polite"></p>
-  </form>
+  <p class="why" style="margin:0;color:var(--muted)">Ábrela una vez desde el enlace privado que te pasó Ahmed. Después este móvil la recuerda.</p>
 </main>
 
 
@@ -157,9 +152,12 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
     <div>
       <div class="label">Trud Sales</div>
       <h1>Recomp</h1>
-      <div class="tiny" id="quien"></div>
     </div>
     <div class="row-top">
+    <div class="seg" role="group" aria-label="Perfil">
+      <button id="p-ahmed" type="button" data-p="ahmed" aria-pressed="true">Ahmed</button>
+      <button id="p-javi" type="button" data-p="javi" aria-pressed="false">Javi</button>
+    </div>
     <button class="tema" id="tema" type="button" aria-label="Cambiar a modo oscuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="temaIco" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     </div>
   </div>
@@ -244,7 +242,6 @@ input[type=text]{width:100%;min-height:46px;padding:8px 12px;border:1px solid va
       </form>
     </div>
   </details>
-  <button class="salir" id="salir" type="button">Cerrar sesión</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
@@ -304,8 +301,16 @@ const fechaCorta=s=>parse(s).toLocaleDateString('es-ES',{day:'numeric',month:'sh
 const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?null:n};
 
 let state={dias:{},meds:[],obj:null};
-const SB=supabase.createClient('https://wuilmkfwxcexsepdcpdn.supabase.co','sb_publishable_jMo4h3jLwZ1eOIpEr2S8Ng_6wscg82f');
-let uid=null;
+/* Sin login: la llave del enlace privado (#k=...) se guarda en este
+   navegador y va en cada petición. Sin ella la base no devuelve nada. */
+const PERFILES={ahmed:'bd37f81a-6f8d-4009-8128-0873c15067c6',javi:'edb503a9-65ce-49f8-9fcc-26ae76e1b359'};
+let llave=null;
+try{const m=location.hash.match(/k=([A-Za-z0-9_-]{20,})/);if(m){localStorage.setItem('recomp.llave',m[1]);history.replaceState(null,'',location.pathname)}llave=localStorage.getItem('recomp.llave')}catch(e){}
+const SB=supabase.createClient('https://wuilmkfwxcexsepdcpdn.supabase.co','sb_publishable_jMo4h3jLwZ1eOIpEr2S8Ng_6wscg82f',
+  {auth:{persistSession:false,autoRefreshToken:false},global:{headers:{'x-recomp-key':llave||''}}});
+let perfil='ahmed';
+try{const g=localStorage.getItem('recomp.perfil');if(PERFILES[g])perfil=g}catch(e){}
+let uid=PERFILES[perfil];
 
 /* ---------- cálculo ---------- */
 const hechosDia=d=>d?HABITOS.filter(h=>(d.hechos||[]).includes(h.k)).length+AUTOS.filter(a=>a.ok(d,state.obj||{})).length:0;
@@ -348,6 +353,7 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 /* ---------- render ---------- */
 const SVG='<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
 function render(){
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.p===perfil)));
   const e=estado(), t=hoy(), d=state.dias[t]||{}, h=d.hechos||[];
   const el=$('estado'); el.textContent='';
   if(e.titulo==='En línea'){const s=document.createElement('span');s.className='serif';s.textContent='En línea';el.appendChild(s)} else el.textContent=e.titulo;
@@ -499,12 +505,14 @@ $('medForm').addEventListener('submit',async e=>{
 /* ---------- sesión y datos ---------- */
 const n2=v=>v==null?null:Number(v);
 async function cargar(){
+  const pedido=uid;
   const desde=addDays(hoy(),-180);
   const [d,m,o]=await Promise.all([
-    SB.from('recomp_dias').select('fecha,hechos,comidas,peso,whoop').gte('fecha',desde),
-    SB.from('recomp_mediciones').select('id,fecha,peso,grasa_pct,musculo_kg,visceral').order('fecha'),
-    SB.from('recomp_objetivos').select('fecha_inicio,peso_inicial,peso_objetivo,fecha_objetivo,prot_obj,kcal_obj').maybeSingle(),
+    SB.from('recomp_dias').select('fecha,hechos,comidas,peso,whoop').eq('profile_id',uid).gte('fecha',desde),
+    SB.from('recomp_mediciones').select('id,fecha,peso,grasa_pct,musculo_kg,visceral').eq('profile_id',uid).order('fecha'),
+    SB.from('recomp_objetivos').select('fecha_inicio,peso_inicial,peso_objetivo,fecha_objetivo,prot_obj,kcal_obj').eq('profile_id',uid).maybeSingle(),
   ]);
+  if(pedido!==uid) return;
   if(d.error||m.error||o.error){$('offline').hidden=false;return}
   $('offline').hidden=true;
   const dias={}; for(const r of d.data) dias[r.fecha]={...r,peso:n2(r.peso),whoop:n2(r.whoop)};
@@ -513,24 +521,21 @@ async function cargar(){
   state.obj=o.data?{...o.data,peso_inicial:n2(o.data.peso_inicial),peso_objetivo:n2(o.data.peso_objetivo)}:null;
   render();
 }
-async function entrar(session){
-  if(!session){uid=null;$('app').hidden=true;$('login').hidden=false;return}
-  uid=session.user.id;
-  const {data:p}=await SB.from('profiles').select('full_name').eq('id',uid).maybeSingle();
-  $('quien').textContent=p?.full_name||session.user.email;
+function arrancar(){
+  if(!llave){$('app').hidden=true;$('login').hidden=false;return}
   $('login').hidden=true;$('app').hidden=false;$('app').style.display='flex';
   if(!$('m-fecha').value)$('m-fecha').value=hoy();
   render(); cargar();
 }
-$('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault(); $('l-err').textContent=''; $('l-btn').disabled=true;
-  const {data,error}=await SB.auth.signInWithPassword({email:$('l-email').value.trim(),password:$('l-pass').value});
-  $('l-btn').disabled=false;
-  if(error){$('l-err').textContent='Email o contraseña incorrectos.';return}
-  entrar(data.session);
-});
-$('salir').addEventListener('click',async()=>{await SB.auth.signOut();state={dias:{},meds:[],obj:null};entrar(null)});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&uid)cargar()});
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.p===perfil) return; perfil=b.dataset.p; uid=PERFILES[perfil];
+  try{localStorage.setItem('recomp.perfil',perfil)}catch(e){}
+  state={dias:{},meds:[],obj:null};
+  for(const id of ['saved','o-msg','m-msg'])$(id).textContent='';
+  for(const id of ['o-pi','o-fi','o-po','o-fo','o-pr','o-kc'])$(id).value='';
+  render(); cargar();
+}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&llave)cargar()});
 
 /* ---------- tema ---------- */
 const SOL='M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4L7 17M17 7l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z';
@@ -541,9 +546,8 @@ try{const t=localStorage.getItem('recomp.tema');if(t==='dark'||t==='light')docum
 $('tema').addEventListener('click',()=>{const n=esOscuro()?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('recomp.tema',n)}catch(e){}pintarTema()});
 pintarTema();
 
-(async()=>{
-  const {data}=await SB.auth.getSession(); entrar(data.session);
-})();
+document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.p===perfil)));
+arrancar();
 </script>
 </body>
 </html>
