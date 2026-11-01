@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1f15" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Finanzas · Jabner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/jabner.css">
+<style>
+.tot{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);padding-top:14px}
+.tot div{display:flex;flex-direction:column;gap:2px;padding-inline:12px;border-left:1px solid var(--line);min-width:0}
+.tot div:first-child{padding-left:0;border-left:0}
+.tot small{font-size:12px;color:var(--muted)}
+.tot strong{font-size:clamp(16px,3.6vw,22px);font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mon+.mon{margin-top:12px}
+.cats{display:flex;flex-direction:column;gap:10px}
+.cat{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.cat .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden}
+.cat .bar i{display:block;height:100%;background:var(--brand);border-radius:999px}
+.cat b{font-weight:600;font-variant-numeric:tabular-nums}
+.mov{display:flex;align-items:center;gap:12px;padding-block:10px;border-top:1px solid var(--line)}
+.mov:first-child{border-top:0}
+.mov .t{flex:1;min-width:0}
+.mov .t strong{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mov .t small{color:var(--muted);font-size:12px}
+.mov .i{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mov .i.ing{color:var(--brand)}
+.mov button{border:0;background:none;color:var(--faint);cursor:pointer;font-size:18px;width:36px;height:36px;border-radius:999px}
+.mov button:hover{color:var(--bad)}
+.wa{font-size:11px;padding:1px 6px;border-radius:999px;background:var(--brand-soft);color:var(--brand);margin-left:4px}
+.mesnav{display:flex;align-items:center;gap:8px}
+.mesnav button{width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--ink);cursor:pointer}
+.mesnav strong{min-width:110px;text-align:center}
+.alta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.alta .full{grid-column:1/-1}
+code{font-family:var(--f-mono);font-size:12.5px;background:var(--bg2);padding:1px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<main class="login" id="login" hidden>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#c5ff5b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+  <h1 style="font-size:34px">Jabner</h1>
+  <p class="muted" style="margin:0">Ábrela una vez desde el enlace privado que te pasó Ahmed. Después este móvil la recuerda.</p>
+</main>
+<div class="wrap" id="app" hidden>
+  <header id="cabecera"></header>
+  <p class="offline" id="offline" hidden>No se pudo conectar con la base de datos. Revisa la conexión y recarga.</p>
+  <section class="grid">
+    <div class="col">
+      <div class="card hero">
+        <div class="card-head"><span class="label">Resumen</span>
+          <div class="mesnav"><button type="button" id="mPrev" aria-label="Mes anterior">‹</button><strong id="mLabel"></strong><button type="button" id="mNext" aria-label="Mes siguiente">›</button></div>
+        </div>
+        <div id="totales"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>En qué se va</h2></div>
+        <div class="cats" id="cats"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="card-head"><h2>Apuntar</h2></div>
+        <form class="alta" id="alta">
+          <div class="seg full" role="group" aria-label="Tipo" style="display:grid;grid-template-columns:1fr 1fr">
+            <button type="button" data-t="gasto" aria-pressed="true">Gasto</button>
+            <button type="button" data-t="ingreso" aria-pressed="false">Ingreso</button>
+          </div>
+          <input id="aImp" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe" required>
+          <select id="aMon" aria-label="Moneda"><option>EUR</option><option>IDR</option><option>USD</option><option>AED</option></select>
+          <select id="aCat" aria-label="Categoría"></select>
+          <input id="aFecha" type="date" required>
+          <input id="aCon" class="full" type="text" maxlength="80" placeholder="Concepto (opcional)">
+          <button class="cta full" type="submit">Guardar</button>
+          <div class="saved full" id="aMsg" aria-live="polite"></div>
+        </form>
+      </div>
+      <details class="card">
+        <summary><div class="t"><h2>Por WhatsApp</h2><small>Cómo apuntar escribiendo un mensaje</small></div><span class="chev" aria-hidden="true">⌄</span></summary>
+        <div class="sub">
+          <p style="margin:0">Escribe al número de WhatsApp de Jabner desde tu móvil. Se apunta a tu nombre según el número desde el que escribes.</p>
+          <p style="margin:0"><code>12 comida nirvana</code> gasto de 12 € en comida<br>
+          <code>150k idr gym</code> gasto de 150.000 IDR en gimnasio<br>
+          <code>+2000 trud</code> o <code>ingreso 2000 trud</code> ingreso de 2.000 €</p>
+          <p class="tiny">Moneda por defecto: euros. Si no reconoce la categoría, va a "otros".</p>
+        </div>
+      </details>
+    </div>
+    <div class="col col3">
+      <div class="card">
+        <div class="card-head"><h2>Movimientos</h2><span class="chip num" id="nMov">0</span></div>
+        <div id="movs"></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<script src="/jabner.js"></script>
+<script>
+const CATS={gasto:['comida','súper','casa','transporte','ocio','gimnasio','salud','ropa','suscripciones','viajes','trabajo','otros'],ingreso:['trud','ventas','inversiones','otros']};
+let mes=hoy().slice(0,7), tipo='gasto', movs=[];
+const dinero=(n,m)=>{const v=Number(n),a=Math.abs(v);if(a>=1e6)return (v/1e6).toLocaleString('es-ES',{maximumFractionDigits:1})+' M '+m;if(m==='IDR'&&a>=1e4)return (v/1e3).toLocaleString('es-ES',{maximumFractionDigits:0})+'k IDR';const ent=m==='IDR'||Number.isInteger(v);return v.toLocaleString('es-ES',{style:'currency',currency:m,minimumFractionDigits:ent?0:2,maximumFractionDigits:ent?0:2})};
+const diasMes=m=>{const [y,mm]=m.split('-').map(Number);return new Date(y,mm,0).getDate()};
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+
+function pintarCats(){$('aCat').innerHTML=CATS[tipo].map(c=>`<option value="${c}">${cap(c)}</option>`).join('')}
+async function cargar(){
+  const pedido=uid;
+  const {data,error}=await SB.from('jabner_movimientos').select('id,fecha,tipo,importe,moneda,categoria,concepto,origen')
+    .eq('profile_id',pedido).gte('fecha',mes+'-01').lte('fecha',mes+'-'+pad(diasMes(mes))).order('fecha',{ascending:false}).order('created_at',{ascending:false});
+  if(pedido!==uid||fallo(error)) return;
+  movs=data.map(m=>({...m,importe:Number(m.importe)})); render();
+}
+function render(){
+  const [y,mm]=mes.split('-').map(Number);
+  $('mLabel').textContent=new Date(y,mm-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' ').replace(/^./,c=>c.toUpperCase());
+  $('mNext').disabled=mes>=hoy().slice(0,7);
+  const porMon={};
+  for(const m of movs){const o=porMon[m.moneda]||={g:0,i:0,cats:{}}; if(m.tipo==='gasto'){o.g+=m.importe;o.cats[m.categoria]=(o.cats[m.categoria]||0)+m.importe}else o.i+=m.importe}
+  const mons=Object.keys(porMon).sort((a,b)=>a==='EUR'?-1:b==='EUR'?1:a.localeCompare(b));
+  if(!mons.length) mons.push('EUR'), porMon.EUR={g:0,i:0,cats:{}};
+  $('totales').innerHTML=mons.map(m=>{const o=porMon[m];return `<div class="mon">${mons.length>1?`<span class="label">${m}</span>`:''}
+    <div class="tot"><div><small>Ingresos</small><strong>${dinero(o.i,m)}</strong></div><div><small>Gastos</small><strong>${dinero(o.g,m)}</strong></div><div><small>Balance</small><strong style="color:${o.i-o.g<0?'var(--bad)':'var(--brand)'}">${dinero(o.i-o.g,m)}</strong></div></div></div>`}).join('');
+  $('cats').innerHTML=mons.map(m=>{
+    const c=Object.entries(porMon[m].cats).sort((a,b)=>b[1]-a[1]); if(!c.length) return '';
+    const max=c[0][1];
+    return (mons.length>1?`<span class="label">${m}</span>`:'')+c.map(([k,v])=>`<div class="cat"><span>${cap(esc(k))}</span><div class="bar"><i style="width:${Math.max(3,v/max*100)}%"></i></div><b>${dinero(v,m)}</b></div>`).join('');
+  }).join('')||'<p class="muted" style="margin:0">Sin gastos este mes.</p>';
+  $('nMov').textContent=movs.length;
+  $('movs').innerHTML=movs.map(m=>`<div class="mov"><div class="t"><strong>${esc(m.concepto||cap(m.categoria))}${m.origen==='whatsapp'?'<span class="wa">WhatsApp</span>':''}</strong>
+    <small>${parse(m.fecha).toLocaleDateString('es-ES',{day:'numeric',month:'short'})} · ${cap(esc(m.categoria))}</small></div>
+    <span class="i ${m.tipo==='ingreso'?'ing':''}">${m.tipo==='ingreso'?'+':'−'}${dinero(m.importe,m.moneda)}</span>
+    <button type="button" data-del="${m.id}" aria-label="Borrar">×</button></div>`).join('')||'<p class="muted" style="margin:0">Nada apuntado este mes.</p>';
+  $('movs').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirm('¿Borrar este movimiento?')) return;
+    const {error}=await SB.from('jabner_movimientos').delete().eq('id',b.dataset.del);
+    if(!fallo(error)) cargar();
+  }));
+}
+document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{tipo=b.dataset.t;document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.t===tipo));pintarCats()}));
+$('alta').addEventListener('submit',async e=>{
+  e.preventDefault(); const importe=num($('aImp').value); if(!importe||importe<=0) return;
+  const {error}=await SB.from('jabner_movimientos').insert({profile_id:uid,tipo,importe,moneda:$('aMon').value,categoria:$('aCat').value,concepto:$('aCon').value.trim()||null,fecha:$('aFecha').value});
+  if(fallo(error)){$('aMsg').textContent='No se pudo guardar.';return}
+  $('aImp').value='';$('aCon').value='';$('aMsg').textContent='Guardado.';setTimeout(()=>$('aMsg').textContent='',2000);
+  mes=$('aFecha').value.slice(0,7); cargar();
+});
+const mover=n=>{const [y,m]=mes.split('-').map(Number);const d=new Date(y,m-1+n,1);mes=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;cargar()};
+$('mPrev').addEventListener('click',()=>mover(-1));
+$('mNext').addEventListener('click',()=>mover(1));
+$('aFecha').value=hoy(); pintarCats();
+jabner('Finanzas',cargar);
+</script>
+</body>
+</html>
