@@ -41,11 +41,15 @@ Deno.serve(async (req) => {
 
   const r = await fetch(`https://docs.google.com/spreadsheets/d/${hoja.valor}/export?format=xlsx`);
   if (!r.ok) return resp(502, { error: "No se pudo leer el Sheet (" + r.status + "). ¿Sigue compartido con enlace?" });
-  const wb = XLSX.read(new Uint8Array(await r.arrayBuffer()), { type: "array" });
+  // Lectura ligera: primero solo los nombres, luego solo las pestañas de semanas y sin estilos ni fórmulas
+  // (leer el libro entero se pasa de memoria en la edge function).
+  const buf = new Uint8Array(await r.arrayBuffer());
+  const nombres = XLSX.read(buf, { type: "array", bookSheets: true }).SheetNames.filter((n: string) => /semana/i.test(n));
+  const wb = XLSX.read(buf, { type: "array", sheets: nombres, cellFormula: false, cellHTML: false, cellStyles: false, cellDates: false, sheetStubs: false });
   // Las columnas del parser cuentan desde A1: si la hoja empieza más abajo o más a la derecha, se rellena.
-  const hojas = wb.SheetNames.map((nombre) => {
+  const hojas = nombres.filter((n: string) => wb.Sheets[n]).map((nombre: string) => {
     const ws = wb.Sheets[nombre];
-    if (ws["!ref"]) { const r = XLSX.utils.decode_range(ws["!ref"]); r.s.c = 0; r.s.r = 0; ws["!ref"] = XLSX.utils.encode_range(r); }
+    if (ws["!ref"]) { const r = XLSX.utils.decode_range(ws["!ref"]); r.s.c = 0; r.s.r = 0; r.e.c = Math.min(r.e.c, 31); ws["!ref"] = XLSX.utils.encode_range(r); }
     return { nombre, rows: XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "", blankrows: true }) as string[][] };
   });
   const out = { ...parsePlan(hojas), leido: new Date().toISOString() };
