@@ -140,10 +140,12 @@ function renderComida(){
   d.comidas.forEach((x,i)=>{
     const row=document.createElement('div'); row.className='plato';
     row.innerHTML=`<div class="t"></div><button class="x" type="button" aria-label="Quitar">✕</button>`;
-    row.firstChild.textContent=x.n; const sm=document.createElement('small'); sm.textContent=`${x.r==='mano'?'A mano':MENUS[x.r]?.nombre||''} · ${ent(x.p)} g proteína · ${ent(x.k)} kcal`; row.firstChild.appendChild(sm);
+    row.firstChild.textContent=x.n; const sm=document.createElement('small'); sm.textContent=`${x.r==='mano'?'A mano':x.r==='ia'?'Estimado por Claude':MENUS[x.r]?.nombre||''} · ${ent(x.p)} g proteína · ${ent(x.k)} kcal`; row.firstChild.appendChild(sm);
     row.lastChild.addEventListener('click',()=>{const l=[...d.comidas];l.splice(i,1);guardarDia(hoy(),{comidas:l})}); box.appendChild(row);
   });
   if(!$('picker').hidden) renderLista();
+  const conc=guardado('recomp.ia.'+uid+'.'+hoy(),'',()=>true);
+  $('iaConclusion').hidden=!conc; $('iaConclusion').textContent=conc;
 }
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 function renderLista(){
@@ -418,6 +420,27 @@ $('pickMano').addEventListener('submit',e=>{
   e.preventDefault();
   anadirComida({r:'mano',n:$('mNom').value.trim().slice(0,80)||'Comida',k:num($('mKc').value)||0,p:num($('mPr').value)||0,c:0,f:0});
   for(const id of ['mNom','mKc','mPr']) $(id).value='';
+});
+// Cuéntame qué has comido: Claude estima platos y macros, los apunta y deja una conclusión del día.
+$('iaForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const texto=$('iaTexto').value.trim(); if(texto.length<3) return;
+  const t=hoy(), quien=uid, tot=totales(dia(t));
+  $('iaBtn').disabled=true; $('iaBtn').textContent='Calculando…';
+  const {data,error}=await SB.functions.invoke('recomp-comida',{body:{texto,objetivo:{prot:metaProt(),kcal:metaKcal()},llevas:{prot:tot.p,kcal:tot.k}}});
+  $('iaBtn').disabled=false; $('iaBtn').textContent='Apuntar con Claude';
+  if(quien!==uid) return;
+  if(error||!data||data.error){
+    let msg='No he podido calcularlo. Prueba otra vez o apúntalo de la carta.';
+    try{const j=await error?.context?.json?.(); if(j?.error) msg=j.error}catch(x){}
+    if(data?.error) msg=data.error; aviso(msg,true); return;
+  }
+  const platos=(data.platos||[]).map(x=>({r:'ia',n:x.n,k:x.k,p:x.p,c:x.c,f:x.f}));
+  const cambios={comidas:[...dia(t).comidas,...platos]}; if(data.dieta) cambios.dieta=data.dieta;
+  recordar('recomp.ia.'+uid+'.'+t,data.conclusion||'');
+  $('iaTexto').value='';
+  guardarDia(t,cambios);
+  if(platos.length) aviso(`Apuntado: ${platos.length} ${platos.length===1?'plato':'platos'}.`);
 });
 $('extraForm').addEventListener('submit',e=>{e.preventDefault();const v=$('extraIn').value.trim().slice(0,40);if(!v)return;const d=dia(hoy());if(!d.extras.some(x=>x.t===v))guardarDia(hoy(),{extras:[...d.extras,{t:v}]});$('extraIn').value=''});
 $('descansoBtn').addEventListener('click',()=>{const d=dia(hoy());guardarDia(hoy(),{descanso:!d.descanso,entreno:d.descanso?d.entreno:(RL.entrenado(d)?d.entreno:null)})});

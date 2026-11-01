@@ -210,3 +210,6 @@ dialog .dl header h2{font-size:20px}
 .mas[open] summary{color:var(--ink)}
 .mas .in{display:flex;flex-direction:column;gap:10px;padding-top:6px}
 .sesiones .big #fzN{font-size:inherit;color:var(--ink);font-weight:600}
+
+.ia{display:flex;flex-direction:column;gap:8px}
+.ia textarea{resize:vertical;min-height:64px}

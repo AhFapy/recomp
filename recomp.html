@@ -66,7 +66,12 @@
         <div class="tres" id="dieta" role="group" aria-label="Cómo has comido hoy">
           <button type="button" class="r" data-v="1">Mal</button><button type="button" class="a" data-v="2">Más o menos</button><button type="button" class="v" data-v="3">Perfecto</button>
         </div>
-        <p class="tiny">Con un toque basta. Si quieres los números, apunta los platos abajo.</p>
+        <p class="tiny">Con un toque basta. Si quieres los números, cuéntamelo o apunta los platos abajo.</p>
+        <form class="ia" id="iaForm">
+          <textarea class="nota" id="iaTexto" rows="2" maxlength="600" placeholder="Cuéntame qué has comido (p. ej. «plato de lentejas con chorizo, pan y un yogur»)"></textarea>
+          <button class="cta" type="submit" id="iaBtn">Apuntar con Claude</button>
+        </form>
+        <p class="aviso" id="iaConclusion" hidden></p>
         <div class="rings">
           <div class="ring">
             <div class="wrapr"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg2)" stroke-width="10"/><circle id="rP" cx="60" cy="60" r="52" fill="none" stroke="var(--brand)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 326.7"/></svg>

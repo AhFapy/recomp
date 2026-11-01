@@ -68,6 +68,10 @@ class FakeSupabase:
         if path == "/functions/v1/recomp-plan":
             if not ok: return js(401, {"error": "llave"})
             body = json.loads(req.post_data or "{}"); return js(200, PLAN if body.get("perfil") == A else {"semanas": []})
+        if path == "/functions/v1/recomp-comida":
+            body = json.loads(req.post_data or "{}")
+            return js(200, {"platos": [{"n": "Lentejas con chorizo (plato)", "k": 560, "p": 28, "c": 60, "f": 22}, {"n": "Pan 60 g", "k": 160, "p": 5, "c": 32, "f": 1}],
+                            "dieta": 2, "conclusion": f"Llevas {body['llevas']['prot'] + 33} g de proteína; en la cena mete 50 g más."})
         m = re.match(r"/rest/v1/(\w+)$", path)
         if not m: return js(404, {})
         t = m.group(1); tabla = self.db.setdefault(t, [])
@@ -190,6 +194,11 @@ def runTests():
             # comida: carta de casa
             pg.click("#addBtn"); pg.click('.chips [data-r="casa"]'); pg.fill("#buscar", "lentejas"); pg.locator("#lista .opt").first.click(); pg.wait_for_timeout(200)
             check(any("Lentejas" in c["n"] for c in fake.dia(HOY)["comidas"]), "platos de casa en la carta")
+            # cuéntame qué has comido
+            pg.fill("#iaTexto", "lentejas con chorizo y pan"); pg.click("#iaBtn"); pg.wait_for_timeout(500)
+            d = fake.dia(HOY)
+            check(any(c["r"] == "ia" and "Pan" in c["n"] for c in d["comidas"]) and d["dieta"] == 2, "Claude apunta los platos y la nota de comida")
+            check("en la cena" in pg.inner_text("#iaConclusion"), "se ve la conclusión")
             # si un guardado falla, vuelve a lo guardado y avisa
             fake.fallar = True
             pg.click('#animo [data-a="5"]'); pg.wait_for_timeout(500)
