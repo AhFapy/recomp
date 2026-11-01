@@ -6,8 +6,8 @@ import * as XLSX from "npm:xlsx@0.18.5";
 import { parsePlan } from "./plan.js";
 
 const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-// Solo la web de Jabner (producción y previews de Vercel).
-const ORIGEN = /^https:\/\/recomp(-[a-z0-9-]+)?-trud-sales\.vercel\.app$|^https:\/\/recomp-trud-sales\.vercel\.app$/;
+// Solo la web de Jabner (jabner.vercel.app y previews de Vercel del proyecto).
+const ORIGEN = /^https:\/\/jabner\.vercel\.app$|^https:\/\/recomp(-[a-z0-9-]+)?-trud-sales\.vercel\.app$/;
 const CORS_BASE: Record<string, string> = {
   "Vary": "Origin",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info, x-recomp-key",
@@ -15,7 +15,7 @@ const CORS_BASE: Record<string, string> = {
 };
 Deno.serve(async (req) => {
   const origen = req.headers.get("origin") ?? "";
-  const CORS = { ...CORS_BASE, "Access-Control-Allow-Origin": ORIGEN.test(origen) ? origen : "https://recomp-trud-sales.vercel.app" };
+  const CORS = { ...CORS_BASE, "Access-Control-Allow-Origin": ORIGEN.test(origen) ? origen : "https://jabner.vercel.app" };
   const resp = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
