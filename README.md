@@ -1,6 +1,6 @@
 # Jabner
 
-Panel personal de Javi y Ahmed (lo profesional va en el panel de Trud). HTML estático + Supabase (proyecto Trud Sales). Sin login: se abre una vez desde el enlace privado (#k=...) y el navegador guarda la llave (`recomp_config`, clave `llave`).
+Panel personal de Javi y Ahmed (lo profesional va en el panel de Trud). HTML estático + Supabase (proyecto Trud Sales). Sin login ni llave: abre directamente en jabner.vercel.app (decisión de Ahmed). Las tablas solo aceptan filas de los dos socios.
 
 - `index.html`: inicio con los módulos.
 - `recomp.html` + `recomp.js`, `recomp-logica.js` (reglas del semáforo, racha y semanas), `recomp-cartas.js`: gimnasio y nutrición (tablas `recomp_*`). El plan de entreno sale del Google Sheet del entrenador vía la edge function `recomp-plan` (id del Sheet en `recomp_config`, clave `plan_sheet:<perfil>`).

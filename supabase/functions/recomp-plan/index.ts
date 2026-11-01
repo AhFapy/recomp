@@ -1,5 +1,5 @@
 // Recomp · plan de entreno leído del Google Sheet del entrenador.
-// El navegador llama con la llave (x-recomp-key) y { perfil }. La URL del Sheet
+// El navegador llama con { perfil } (sin llave desde el 1 nov 2026). La URL del Sheet
 // vive en recomp_config (plan_sheet:<perfil>), nunca en el código de la web.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import * as XLSX from "npm:xlsx@0.18.5";
@@ -20,9 +20,6 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") return resp(405, { error: "método" });
-
-  const { data: cfg } = await sb.from("recomp_config").select("valor").eq("clave", "llave").maybeSingle();
-  if (!cfg?.valor || req.headers.get("x-recomp-key") !== cfg.valor) return resp(401, { error: "llave" });
 
   let perfil = "";
   try { perfil = String((await req.json()).perfil ?? ""); } catch { /* sin cuerpo */ }

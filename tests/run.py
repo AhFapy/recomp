@@ -61,7 +61,7 @@ class FakeSupabase:
         hdr = {k.lower(): v for k, v in req.headers.items()}
         cors = {"access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*"}
         if req.method == "OPTIONS": return route.fulfill(status=204, headers=cors)
-        ok = hdr.get("x-recomp-key") == LLAVE
+        ok = True  # sin llave
         js = lambda st, body: route.fulfill(status=st, headers={**cors, "content-type": "application/json"}, body=json.dumps(body))
         if path == "/rest/v1/rpc/recomp_ajustes":
             return js(200, [{"clave": "ahmed", "id": A, "nombre": "Ahmed", "plan": True}, {"clave": "javi", "id": J, "nombre": "Javi", "plan": False}] if ok else None)
@@ -208,10 +208,6 @@ def runTests():
                 check(not e2 and sin_desborde(p2), f"{ruta} carga sin errores ni scroll horizontal {e2[:1]}")
                 p2.close()
             ctx.close()
-        # sin llave: pantalla de enlace
-        ctx = b.new_context(service_workers="block"); pg = ctx.new_page(); pg.route(WEB + "/**", servir); pg.route(SUPA + "/**", FakeSupabase())
-        pg.goto(WEB + "/recomp"); pg.wait_for_timeout(300)
-        check(pg.is_visible("#login") and not pg.is_visible("#app"), "sin llave no se ve nada")
         b.close()
     print(f"\n{'TODO OK' if not FALLOS else str(len(FALLOS)) + ' FALLOS'}")
     return not FALLOS

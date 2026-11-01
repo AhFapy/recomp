@@ -1,6 +1,5 @@
-/* Jabner · base compartida: llave del enlace privado, Supabase, perfil y tema.
-   Nada personal aquí: los perfiles llegan de recomp_ajustes(), detrás de la llave.
-   La llave y el perfil usan las claves de Recomp para no tener que volver a abrir el enlace. */
+/* Jabner · base compartida: Supabase, perfil y tema. Sin llave: la web abre directamente.
+   Los perfiles llegan de recomp_ajustes(). */
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -38,8 +37,7 @@ const esOscuro=()=>{const t=document.documentElement.getAttribute('data-theme');
 
 /* Pinta la cabecera común y arranca. titulo: nombre del módulo (null en el inicio). */
 async function jabner(titulo,alCambiar){
-  if(!llave){$('login').hidden=false;return}
-  if(!(await cargarPerfiles())){$('login').hidden=false;$('login').querySelector('p').textContent='El enlace guardado no vale. Ábrela de nuevo desde el enlace privado.';return}
+  if(!(await cargarPerfiles())){$('login').hidden=false;$('login').querySelector('p').textContent='No se pudo conectar con la base de datos. Revisa la conexión y recarga.';return}
   const h=$('cabecera');
   h.className='top';
   h.innerHTML=`<div class="marca">
