@@ -3,7 +3,7 @@
 Panel personal de Javi y Ahmed (lo profesional va en el panel de Trud). HTML estático + Supabase (proyecto Trud Sales). Sin login: se abre una vez desde el enlace privado (#k=...) y el navegador guarda la llave (`recomp_config`, clave `llave`).
 
 - `index.html`: inicio con los módulos.
-- `recomp.html`: gimnasio y nutrición (tablas `recomp_*`).
+- `recomp.html` + `recomp.js`, `recomp-logica.js` (reglas del semáforo, racha y semanas), `recomp-cartas.js`: gimnasio y nutrición (tablas `recomp_*`). El plan de entreno sale del Google Sheet del entrenador vía la edge function `recomp-plan` (id del Sheet en `recomp_config`, clave `plan_sheet:<perfil>`).
 - `habitos.html`: la cartulina, mente/cuerpo/alma/objetivos (`jabner_habitos`, `jabner_habitos_log`).
 - `finanzas.html`: gastos e ingresos (`jabner_movimientos`).
 - `jabner.css`, `jabner.js`: base común.
@@ -18,4 +18,6 @@ con cabecera `x-jabner-secret` (valor en `recomp_config`, clave `wa_secreto`) y 
 Devuelve `{ ok, respuesta }`; se puede mapear `respuesta` a un mensaje de WhatsApp de vuelta.
 Solo se aceptan los números de `jabner_telefonos`.
 
-Despliegue: Vercel, sin build (Framework: Other).
+Despliegue: Vercel, sin build (Framework: Other). Todo el JS va en archivos y `vercel.json` pone una CSP estricta; supabase-js y las fuentes se sirven desde la propia web.
+
+Pruebas: `python3 tests/run.py` (Playwright). Sirve la web con las cabeceras de Vercel, imita Supabase en memoria y comprueba Recomp a 320, 375 y 1440 px con el reloj fijo.

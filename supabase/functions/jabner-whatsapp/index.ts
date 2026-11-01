@@ -72,8 +72,7 @@ const resp = (status: number, body: unknown) =>
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return resp(405, { ok: false });
-  const url = new URL(req.url);
-  const secreto = req.headers.get("x-jabner-secret") ?? url.searchParams.get("secret") ?? "";
+  const secreto = req.headers.get("x-jabner-secret") ?? "";   // solo cabecera: en la URL acabaría en logs
   const { data: cfg } = await sb.from("recomp_config").select("valor").eq("clave", "wa_secreto").maybeSingle();
   if (!cfg?.valor || secreto !== cfg.valor) return resp(401, { ok: false });
 
