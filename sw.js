@@ -1,7 +1,7 @@
 /* Jabner · service worker. Páginas: red primero (si no hay red, la última copia).
    Estáticos: copia primero. Supabase y cualquier otro origen: nunca se cachean. */
-const V='jabner-v4';
-const ESTATICOS=['/','/recomp','/habitos','/finanzas','/jabner.css','/recomp.css','/jabner.js','/inicio.js','/habitos.js','/finanzas.js','/recomp.js','/recomp-logica.js','/recomp-cartas.js','/vendor/supabase.js','/manifest.json','/icon.svg','/icon-192.png',
+const V='jabner-v5';
+const ESTATICOS=['/','/jabner.css','/recomp.css','/jabner.js','/inicio.js','/conclusiones.js','/habitos.js','/finanzas.js','/recomp.js','/recomp-logica.js','/recomp-cartas.js','/vendor/supabase.js','/manifest.json','/icon.svg','/icon-192.png',
   '/fonts/inter-tight-latin-400-normal.woff2','/fonts/inter-tight-latin-500-normal.woff2','/fonts/inter-tight-latin-600-normal.woff2','/fonts/inter-tight-latin-700-normal.woff2','/fonts/instrument-serif-latin-400-italic.woff2','/fonts/instrument-serif-latin-400-normal.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(ESTATICOS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

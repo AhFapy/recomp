@@ -90,11 +90,11 @@ function celebrar(f,colorAntes,rachaAntes){
 function render(){
   if(!uid) return; hoyPintado=hoy();
   renderHoy(); renderComida(); renderEntreno(); renderCal(); renderSemanas(); renderVas();
+  if(typeof pintarResumen==='function') pintarResumen();
 }
 const COLTXT={v:'verde',a:'amarillo',r:'rojo'};
 function renderHoy(){
   const t=hoy(), d=dia(t), c=RL.colorDia(d);
-  $('fechaHoy').textContent=parse(t).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
   $('semDia').className='sem '+(c||'');
   if(c) $('estadoDia').innerHTML=`Día <span class="serif">${COLTXT[c]}</span>`;
   else $('estadoDia').textContent=d.pasos==null&&d.dieta==null?'Sin apuntar':d.pasos==null?'Faltan los pasos':'Falta la comida';
@@ -481,7 +481,7 @@ function limpiarForms(){
   for(const id of ['o-pi','o-fi','o-po','o-fo','o-pr','o-kc','m-peso','m-gpct','m-mus','m-vis']) $(id).value='';
 }
 // El formulario del objetivo se rellena con lo guardado al abrirlo.
-document.querySelector('details.card').addEventListener('toggle',ev=>{const o=state.obj;if(!ev.target.open||!o)return;
+$('objDetails').addEventListener('toggle',ev=>{const o=state.obj;if(!ev.target.open||!o)return;
   $('o-pi').value=o.peso_inicial??'';$('o-fi').value=o.fecha_inicio||'';$('o-po').value=o.peso_objetivo??'';$('o-fo').value=o.fecha_objetivo||'';$('o-pr').value=o.prot_obj??'';$('o-kc').value=o.kcal_obj??''});
 $('m-fecha').value=hoy();
 
@@ -493,4 +493,3 @@ setInterval(()=>{
   if(!escribiendo&&!$('hoja').open&&!$('ficha').open) cargar(false);
 },60000);
 
-jabner('Recomp',c=>cargar(c));

@@ -1,3 +1,5 @@
+/* Hábitos · la cartulina. */
+const Habitos=(()=>{
 const AREAS=[['mente','Mente'],['cuerpo','Cuerpo'],['alma','Alma'],['objetivos','Objetivos']];
 let mes=hoy().slice(0,7), habitos=[], log={};  // log[habito|fecha]=true/false
 const k=(h,f)=>h+'|'+f;
@@ -25,6 +27,7 @@ async function marcar(id,f,val){
   if(fallo(error)){ if(prev==null) delete log[k(id,f)]; else log[k(id,f)]=prev; render(); }
 }
 function render(){
+  if(typeof pintarResumen==='function') setTimeout(pintarResumen);
   const t=hoy();
   // Hoy
   let html='', verdes=0;
@@ -39,16 +42,16 @@ function render(){
     }
     html+='</div>';
   }
-  $('hoy').innerHTML=html||'<p class="muted" style="margin:0">Aún no tienes hábitos. Añádelos abajo en "Editar hábitos".</p>';
-  $('score').textContent=habitos.length?`${verdes}/${habitos.length}`:'—';
-  $('hoy').querySelectorAll('[data-h]').forEach(b=>b.addEventListener('click',()=>{
+  $('hHoy').innerHTML=html||'<p class="muted" style="margin:0">Aún no tienes hábitos. Añádelos abajo en "Editar hábitos".</p>';
+  $('hScore').textContent=habitos.length?`${verdes}/${habitos.length}`:'—';
+  $('hHoy').querySelectorAll('[data-h]').forEach(b=>b.addEventListener('click',()=>{
     const want=b.dataset.val==='1', cur=log[k(b.dataset.h,t)];
     marcar(b.dataset.h,t,cur===want?null:want);
   }));
   // Cartulina
   const [y,mm]=mes.split('-').map(Number), N=diasMes(mes);
-  $('mLabel').textContent=new Date(y,mm-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' ').replace(/^./,c=>c.toUpperCase());
-  $('mNext').disabled=mes>=t.slice(0,7);
+  $('hLabel').textContent=new Date(y,mm-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}).replace(' de ',' ').replace(/^./,c=>c.toUpperCase());
+  $('hNext').disabled=mes>=t.slice(0,7);
   let c='<table><thead><tr><th></th>';
   for(let d=1;d<=N;d++){const f=`${mes}-${pad(d)}`;c+=`<th class="${f===t?'hoy':''}">${d}</th>`}
   c+='<th>%</th></tr></thead><tbody>';
@@ -67,29 +70,31 @@ function render(){
     }
   }
   c+='</tbody></table>';
-  $('cart').innerHTML=habitos.length?c:'';
-  $('cart').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
+  $('hCart').innerHTML=habitos.length?c:'';
+  $('hCart').querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{
     const cur=log[k(b.dataset.c,b.dataset.f)];
     marcar(b.dataset.c,b.dataset.f,cur===undefined?true:cur===true?false:null);
   }));
   // Lista editable
-  $('lista').innerHTML=AREAS.map(([a,n])=>{
+  $('hLista').innerHTML=AREAS.map(([a,n])=>{
     const hs=habitos.filter(h=>h.area===a);
     return `<div class="hoy-area" style="padding-bottom:8px"><span class="label">${n}</span>${hs.map(h=>`<div class="edit"><span>${esc(h.nombre)}</span><button type="button" data-del="${h.id}">Quitar</button></div>`).join('')||'<span class="tiny">—</span>'}</div>`;
   }).join('');
-  $('lista').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
+  $('hLista').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
     const {error}=await SB.from('jabner_habitos').update({activo:false}).eq('id',b.dataset.del);
     if(!fallo(error)) cargar();
   }));
 }
-$('nueva').addEventListener('submit',async e=>{
+$('hNueva').addEventListener('submit',async e=>{
   e.preventDefault(); const nombre=$('nNom').value.trim(); if(!nombre) return;
   const area=$('nArea').value, orden=habitos.filter(h=>h.area===area).length+1;
   const {error}=await SB.from('jabner_habitos').insert({profile_id:uid,area,nombre,orden});
   if(!fallo(error)){$('nNom').value='';cargar()}
 });
 const mover=n=>{const [y,m]=mes.split('-').map(Number);const d=new Date(y,m-1+n,1);mes=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;cargar()};
-$('mPrev').addEventListener('click',()=>mover(-1));
-$('mNext').addEventListener('click',()=>mover(1));
-jabner('Hábitos',cargar);
-setTimeout(()=>{const c=$('cart');const th=c.querySelector('th.hoy');if(th)c.scrollLeft=th.offsetLeft-c.clientWidth/2},800);
+$('hPrev').addEventListener('click',()=>mover(-1));
+$('hNext').addEventListener('click',()=>mover(1));
+const centrar=()=>{const c=$('hCart'),th=c.querySelector('th.hoy');if(th)c.scrollLeft=th.offsetLeft-c.clientWidth/2};
+const resumen=()=>{const t=hoy();return {total:habitos.length,verdes:habitos.filter(x=>log[k(x.id,t)]===true).length,lista:habitos}};
+return {cargar:async()=>{await cargar();centrar()},resumen};
+})();
