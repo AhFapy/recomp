@@ -82,9 +82,12 @@ Deno.serve(async (req) => {
   const texto = String(body.message ?? (body as any).message_body ?? (body as any).body ?? "").trim();
 
   const { data: quien } = await sb.from("jabner_telefonos").select("profile_id").eq("telefono", tel).maybeSingle();
+  // Rastro mínimo para diagnosticar sin guardar el mensaje: final del teléfono y si se ha reconocido.
+  console.log(`wa tel=…${tel.slice(-4)} conocido=${!!quien} claves=${Object.keys(body).join(",")} largo=${texto.length}`);
   if (!quien) return resp(200, { ok: false, respuesta: "" }); // número desconocido: no contestar
 
   const x = interpretar(texto);
+  if (!x) console.log("wa sin importe");
   if (!x) return resp(200, { ok: false, respuesta: "No he visto el importe. Ejemplo: 12 comida nirvana, 150k idr gym o +2000 trud." });
 
   const { error } = await sb.from("jabner_movimientos").insert({ profile_id: quien.profile_id, ...x, origen: "whatsapp", texto_original: texto.slice(0, 500) });
