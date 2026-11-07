@@ -81,7 +81,10 @@ Deno.serve(async (req) => {
   const tel = normTel(String(body.phone ?? (body as any).contact?.phone ?? ""));
   const texto = String(body.message ?? (body as any).message_body ?? (body as any).body ?? "").trim();
 
-  const { data: quien } = await sb.from("jabner_telefonos").select("profile_id").eq("telefono", tel).maybeSingle();
+  // GHL no siempre manda el prefijo (+34): se compara por los últimos 9 dígitos.
+  const { data: tels } = await sb.from("jabner_telefonos").select("telefono,profile_id");
+  const fin = tel.replace(/\D/g, "").slice(-9);
+  const quien = fin.length === 9 ? (tels ?? []).find((t) => t.telefono.replace(/\D/g, "").endsWith(fin)) ?? null : null;
   // Rastro mínimo para diagnosticar sin guardar el mensaje: final del teléfono y si se ha reconocido.
   console.log(`wa tel=…${tel.slice(-4)} conocido=${!!quien} claves=${Object.keys(body).join(",")} largo=${texto.length}`);
   if (!quien) return resp(200, { ok: false, respuesta: "" }); // número desconocido: no contestar
