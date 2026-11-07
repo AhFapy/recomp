@@ -36,7 +36,10 @@ def base_datos():
                               {"id": "m2", "profile_id": A, "fecha": "2026-10-29", "peso": 88, "grasa_pct": 21, "musculo_kg": 38.4, "visceral": 85}],
         "recomp_objetivos": [{"profile_id": A, "fecha_inicio": "2026-10-01", "peso_inicial": 90, "peso_objetivo": 81, "fecha_objetivo": "2026-12-31", "prot_obj": 170, "kcal_obj": 2000, "plan_semana": "PRUEBA SEMANA 2"}],
         "jabner_habitos": [{"id": "h1", "profile_id": A, "area": "mente", "nombre": "Leer 15 min", "orden": 1, "activo": True, "created_at": "2026-11-01"}],
-        "jabner_habitos_log": [], "jabner_movimientos": [],
+        "jabner_habitos_log": [], "jabner_movimientos": [
+            {"id": "f1", "profile_id": A, "fecha": "2026-10-01", "tipo": "ingreso", "importe": 900, "facturado": 2500, "moneda": "EUR", "categoria": "trud", "concepto": "Venta octubre", "origen": "app", "created_at": "2026-10-01"},
+            {"id": "f2", "profile_id": A, "fecha": "2026-10-01", "tipo": "gasto", "importe": 300, "facturado": None, "moneda": "EUR", "categoria": "casa", "concepto": "Villa", "origen": "app", "created_at": "2026-10-01"},
+            {"id": "f3", "profile_id": A, "fecha": "2026-09-01", "tipo": "ingreso", "importe": 500, "facturado": None, "moneda": "EUR", "categoria": "trud", "concepto": "Septiembre", "origen": "app", "created_at": "2026-09-01"}],
     }
 
 
@@ -220,6 +223,10 @@ def runTests():
             pg.fill("#aImp", "12"); pg.click('#alta button[type=submit]'); pg.wait_for_timeout(400)
             check("12" in pg.inner_text("#kGasto"), f"un gasto sube la cifra de arriba ({pg.inner_text('#kGasto')})")
             check(pg.locator("#conclus li").count() >= 1, "salen conclusiones")
+            check(pg.locator("#fMeses tr").count() >= 3 and "3.000" in pg.inner_text("#fTotal").replace("\u202f",".") , f"tabla mes a mes con facturado ({pg.inner_text('#fTotal')})")
+            pg.click('#fMeses tr[data-m="2026-10"]'); pg.wait_for_timeout(200)
+            check("Venta octubre" in pg.inner_text("#hIng") and "2500" in pg.inner_text("#hIng").replace(".","").replace("\u202f",""), "tocar un mes enseña su hoja con lo facturado")
+            check(pg.locator(".fgraf rect[data-m]").count() >= 3, "gráfica de columnas por mes")
             check(sin_desborde(pg), "sin scroll horizontal al final")
             pg.screenshot(path=f"/tmp/jabner-final-{ancho}.png", full_page=True)
             ctx.close()

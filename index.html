@@ -247,53 +247,60 @@
 
       <section class="seccion" id="finanzas" aria-label="Finanzas">
         <div class="cab-pag"><span class="label">Gastos e ingresos</span><h2>Finanzas</h2></div>
-        <div class="grid">
-        <div class="col">
-      <div class="card">
-        <div class="card-head"><span class="label">Resumen</span>
-          <div class="mesnav"><button type="button" id="fPrev" aria-label="Mes anterior">‹</button><strong id="fLabel"></strong><button type="button" id="fNext" aria-label="Mes siguiente">›</button></div>
-        </div>
-        <div id="fTotales"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>En qué se va</h2></div>
-        <div class="cats" id="fCats"></div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card">
-        <div class="card-head"><h2>Apuntar</h2></div>
-        <form class="alta" id="alta">
-          <div class="seg full" role="group" aria-label="Tipo" style="display:grid;grid-template-columns:1fr 1fr">
-            <button type="button" data-t="gasto" aria-pressed="true">Gasto</button>
-            <button type="button" data-t="ingreso" aria-pressed="false">Ingreso</button>
+        <div class="card">
+          <div class="card-head"><span class="label">Resumen</span>
+            <div class="mesnav"><button type="button" id="fPrev" aria-label="Mes anterior">‹</button><strong id="fLabel"></strong><button type="button" id="fNext" aria-label="Mes siguiente">›</button></div>
           </div>
-          <input id="aImp" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe" required>
-          <select id="aMon" aria-label="Moneda"><option>EUR</option><option>IDR</option><option>USD</option><option>AED</option></select>
-          <select id="aCat" aria-label="Categoría"></select>
-          <input id="aFecha" type="date" required>
-          <input id="aCon" class="full" type="text" maxlength="80" placeholder="Concepto (opcional)">
-          <button class="cta full" type="submit">Guardar</button>
-          <div class="saved full" id="aMsg" aria-live="polite"></div>
-        </form>
-      </div>
-      <details class="card">
-        <summary><div class="t"><h2>Por WhatsApp</h2><small>Cómo apuntar escribiendo un mensaje</small></div><span class="chev" aria-hidden="true">⌄</span></summary>
-        <div class="sub">
-          <p style="margin:0">Escribe al número de WhatsApp de Jabner desde tu móvil. Se apunta a tu nombre según el número desde el que escribes.</p>
-          <p style="margin:0"><code>12 comida nirvana</code> gasto de 12 € en comida<br>
-          <code>150k idr gym</code> gasto de 150.000 IDR en gimnasio<br>
-          <code>+2000 trud</code> o <code>ingreso 2000 trud</code> ingreso de 2.000 €</p>
-          <p class="tiny">Moneda por defecto: euros. Si no reconoce la categoría, va a "otros".</p>
+          <div class="fkpis" id="fTotales"></div>
+          <p class="tiny" id="fOtras" hidden></p>
         </div>
-      </details>
-    </div>
-    <div class="col col3">
-      <div class="card">
-        <div class="card-head"><h2>Movimientos</h2><span class="chip num" id="nMov">0</span></div>
-        <div id="movs"></div>
-      </div>
-    </div>
+        <div class="card">
+          <div class="card-head"><h2>Movimientos del mes</h2><span class="chip num" id="nMov">0</span></div>
+          <div class="hoja">
+            <div class="hoja-col"><div class="hoja-tit"><span class="label">Ingresos</span><b class="num" id="hIngTot"></b></div>
+              <table class="htab"><thead><tr><th>Concepto</th><th class="n">Facturado</th><th class="n">Beneficio</th><th aria-label="Borrar"></th></tr></thead><tbody id="hIng"></tbody></table></div>
+            <div class="hoja-col"><div class="hoja-tit"><span class="label">Gastos</span><b class="num" id="hGasTot"></b></div>
+              <table class="htab"><thead><tr><th>Concepto</th><th class="cat-c">Categoría</th><th class="n">Importe</th><th aria-label="Borrar"></th></tr></thead><tbody id="hGas"></tbody></table></div>
+          </div>
+        </div>
+        <div class="fila3">
+          <div class="card">
+            <div class="card-head"><h2>En qué se va</h2></div>
+            <div class="cats" id="fCats"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Apuntar</h2></div>
+            <form class="alta" id="alta">
+              <div class="seg full" role="group" aria-label="Tipo" style="display:grid;grid-template-columns:1fr 1fr">
+                <button type="button" data-t="gasto" aria-pressed="true">Gasto</button>
+                <button type="button" data-t="ingreso" aria-pressed="false">Ingreso</button>
+              </div>
+              <input id="aImp" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Importe" required>
+              <select id="aMon" aria-label="Moneda"><option>EUR</option><option>IDR</option><option>USD</option><option>AED</option></select>
+              <input id="aFac" class="full" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Facturado (si no es lo mismo que el importe)" hidden>
+              <select id="aCat" aria-label="Categoría"></select>
+              <input id="aFecha" type="date" required>
+              <input id="aCon" class="full" type="text" maxlength="80" placeholder="Concepto (opcional)">
+              <button class="cta full" type="submit">Guardar</button>
+              <div class="saved full" id="aMsg" aria-live="polite"></div>
+            </form>
+          </div>
+          <details class="card">
+            <summary><div class="t"><h2>Por WhatsApp</h2><small>Cómo apuntar escribiendo un mensaje</small></div><span class="chev" aria-hidden="true">⌄</span></summary>
+            <div class="sub">
+              <p style="margin:0">Escribe al número de WhatsApp de Trud desde tu móvil. Se apunta a tu nombre según el número desde el que escribes.</p>
+              <p style="margin:0"><code>12 comida nirvana</code> gasto de 12 €<br>
+              <code>150k idr gym</code> gasto de 150.000 IDR<br>
+              <code>+2000 trud</code> ingreso de 2.000 €</p>
+              <p class="tiny">Moneda por defecto: euros. Si no reconoce la categoría, va a "otros".</p>
+            </div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Mes a mes</h2><span class="tiny">En euros · toca un mes para verlo</span></div>
+          <div class="leyenda"><span><i style="background:var(--line2)"></i>Facturado</span><span><i style="background:var(--brand)"></i>Ingresos</span><span><i style="background:var(--bad)"></i>Gastos</span></div>
+          <div id="fGraf"></div>
+          <table class="meses"><thead><tr><th>Mes</th><th class="n">Facturado</th><th class="n">Ingresos</th><th class="n">Gastos</th><th class="n">Balance</th></tr></thead><tbody id="fMeses"></tbody><tfoot id="fTotal"></tfoot></table>
         </div>
       </section>
     </main>

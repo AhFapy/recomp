@@ -228,3 +228,42 @@ html{padding-top:0}
 .alta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .alta .full{grid-column:1/-1}
 code{font-family:var(--f-mono);font-size:12.5px;background:var(--bg2);padding:1px 6px;border-radius:6px}
+/* ---------- finanzas: resumen grande, hoja del mes y mes a mes ---------- */
+.fkpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;border-top:1px solid var(--line);padding-top:16px}
+@media (min-width:760px){.fkpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.fk{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fk small{font-size:13px;color:var(--muted)}
+.fk strong{font-size:clamp(24px,3.6vw,38px);font-weight:600;letter-spacing:-.04em;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fk.ing strong{color:var(--brand)}.fk.neg strong{color:var(--bad)}.fk.pos strong{color:var(--brand)}
+.hoja{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+@media (min-width:900px){.hoja{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hoja-col{min-width:0;display:flex;flex-direction:column;gap:8px}
+.hoja-tit{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line2);padding-bottom:8px}
+.hoja-tit b{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.htab,.meses{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+.htab th,.meses th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding:6px 6px 8px}
+.htab td,.meses td{padding:9px 6px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htab th:first-child,.htab td:first-child,.meses th:first-child,.meses td:first-child{padding-left:0}
+.htab .n,.meses .n{text-align:right}
+.htab th:nth-child(2),.htab th:nth-child(3){width:28%}
+.htab th:last-child{width:36px}
+.htab td:last-child{padding:0;text-align:right}
+.htab button{border:0;background:none;color:var(--faint);cursor:pointer;font-size:18px;width:36px;height:36px;border-radius:999px}
+.htab button:hover{color:var(--bad)}
+.htab .ing,.meses .ing{color:var(--brand);font-weight:600}
+.htab .vacio{padding-block:14px;white-space:normal}
+.wa{font-size:10.5px;padding:1px 6px;border-radius:999px;background:var(--brand-soft);color:var(--accent);margin-left:6px}
+@media (max-width:479px){.htab .cat-c{display:none}.htab th:nth-child(3){width:30%}}
+.fila3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;align-items:start}
+.fgraf{width:100%;height:auto;display:block}
+#fGraf{width:100%}
+.meses td{padding-block:10px}
+.meses tbody tr{cursor:pointer;transition:background .18s var(--ease)}
+.meses tbody tr:hover{background:var(--card2)}
+.meses tr.sel td{background:var(--brand-soft);font-weight:600}
+.meses .neg{color:var(--bad)}
+.meses tfoot td{border-top:1px solid var(--line2);font-weight:700}
+@media (max-width:479px){.meses{font-size:12.5px}.meses th{font-size:9.5px;letter-spacing:.06em}}
+.leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda i{width:10px;height:10px;border-radius:3px;display:inline-block}
