@@ -64,4 +64,9 @@ async function jabner(alCambiar){
   }
 }
 const fallo=e=>{if(e){$('offline').hidden=false;console.error(e);return true}$('offline').hidden=true;return false};
-if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+/* Versión nueva publicada: el service worker se actualiza al volver a la pestaña y la página se recarga sola una vez. */
+if('serviceWorker' in navigator){
+  addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').then(r=>{document.addEventListener('visibilitychange',()=>{if(!document.hidden)r.update().catch(()=>{})});setInterval(()=>r.update().catch(()=>{}),30*60*1000)}).catch(()=>{}));
+  let recargada=false, habia=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(habia&&!recargada){recargada=true;location.reload()}});
+}
