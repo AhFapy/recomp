@@ -46,6 +46,21 @@ export function interpretar(texto: string) {
   if (/\bayer\b/.test(t)) { fecha = hoyMadrid(-1); t = t.replace(/\bayer\b/g, " "); }
   else t = t.replace(/\bhoy\b/g, " ");
 
+  // Ingresos con lo facturado: "+2500/850 venta juan" o "+850 venta juan fact 2500" (facturado 2.500, beneficio 850).
+  let facturado: number | null = null;
+  const num = (x: string) => /\.\d{3}/.test(x) ? Number(x.replace(/\./g, "")) : Number(x.replace(",", "."));
+  const N = "(\\d{1,3}(?:\\.\\d{3})+|\\d+(?:[.,]\\d{1,2})?)\\s*(k|mil)?";
+  const kx = (v: number, k?: string) => (k ? v * 1000 : v);
+  const barra = t.match(new RegExp(N + "\\s*/\\s*" + N));
+  if (barra) {
+    tipo = "ingreso";
+    facturado = kx(num(barra[1]), barra[2]);
+    t = t.replace(barra[0], " " + barra[3] + (barra[4] ?? "") + " ");
+  } else {
+    const fx = t.match(new RegExp("\\b(?:fact(?:urado|uraci[oó]n)?|fra)\\.?\\s*" + N));
+    if (fx) { facturado = kx(num(fx[1]), fx[2]); t = t.replace(fx[0], " "); tipo = "ingreso"; }
+  }
+
   const m = t.match(/(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d{1,2})?)\s*(k|mil|m)?\b/);
   if (!m) return null;
   let importe = m[1].includes(".") && /\.\d{3}/.test(m[1]) ? Number(m[1].replace(/\./g, "")) : Number(m[1].replace(",", "."));
@@ -64,7 +79,9 @@ export function interpretar(texto: string) {
     if (palabras.some((p) => t.includes(p))) { categoria = cat; break; }
   }
   const concepto = t.replace(/\b(en|de|por|para|el|la|los|las|un|una)\b/g, " ").replace(/\s+/g, " ").trim();
-  return { tipo, importe: Math.round(importe * 100) / 100, moneda, categoria, concepto: concepto ? concepto.charAt(0).toUpperCase() + concepto.slice(1) : null, fecha };
+  if (facturado != null && !(facturado > 0 && facturado !== importe)) facturado = null;
+  if (tipo !== "ingreso") facturado = null;
+  return { tipo, importe: Math.round(importe * 100) / 100, facturado: facturado == null ? null : Math.round(facturado * 100) / 100, moneda, categoria, concepto: concepto ? concepto.charAt(0).toUpperCase() + concepto.slice(1) : null, fecha };
 }
 
 const resp = (status: number, body: unknown) =>
@@ -97,5 +114,6 @@ Deno.serve(async (req) => {
   if (error) { console.error(error); return resp(500, { ok: false, respuesta: "No se pudo guardar. Prueba otra vez." }); }
 
   const imp = x.importe.toLocaleString("es-ES", { style: "currency", currency: x.moneda, maximumFractionDigits: x.moneda === "IDR" ? 0 : 2 });
-  return resp(200, { ok: true, respuesta: `Apuntado: ${x.tipo} de ${imp} en ${x.categoria}${x.concepto ? ` (${x.concepto})` : ""}.` });
+  const fac = x.facturado != null ? ` (facturado ${x.facturado.toLocaleString("es-ES", { style: "currency", currency: x.moneda, maximumFractionDigits: 2 })})` : "";
+  return resp(200, { ok: true, respuesta: `Apuntado: ${x.tipo} de ${imp}${fac} en ${x.categoria}${x.concepto ? ` (${x.concepto})` : ""}.` });
 });
