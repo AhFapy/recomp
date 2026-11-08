@@ -267,3 +267,11 @@ code{font-family:var(--f-mono);font-size:12.5px;background:var(--bg2);padding:1p
 .leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
 .leyenda span{display:inline-flex;align-items:center;gap:6px}
 .leyenda i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ---------- tiempo real: lo que entra se ve entrar ---------- */
+@keyframes fila-entra{0%{opacity:0;transform:translateY(-8px)}35%{opacity:1;transform:none}}
+@keyframes fila-brilla{0%,35%{background:color-mix(in srgb,var(--lime) 55%,transparent)}100%{background:transparent}}
+.htab tr.entra td{animation:fila-entra .5s var(--ease) both,fila-brilla 2.6s var(--ease) both}
+@keyframes cifra-pulso{0%{transform:scale(1)}35%{transform:scale(1.08)}100%{transform:scale(1)}}
+.fk.pulso strong{display:inline-block;transform-origin:left center;animation:cifra-pulso .6s var(--ease)}
+@media (prefers-reduced-motion:reduce){.htab tr.entra td{animation:fila-brilla 2.6s linear both}.fk.pulso strong{animation:none}}

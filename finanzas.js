@@ -1,7 +1,7 @@
 /* Finanzas · gastos e ingresos. Un ingreso guarda lo que queda (importe = beneficio) y, si fue distinto, lo facturado. */
 const Finanzas=(()=>{
 const CATS={gasto:['comida','súper','casa','transporte','ocio','gimnasio','salud','ropa','suscripciones','viajes','trabajo','otros'],ingreso:['trud','ventas','inversiones','otros']};
-let mes=hoy().slice(0,7), tipo='gasto', todos=[];
+let mes=hoy().slice(0,7), tipo='gasto', todos=[], recien=new Set(), previo={}, canal=null, canalUid=null;
 const dinero=(n,m='EUR')=>{const v=Number(n),a=Math.abs(v);if(a>=1e6)return (v/1e6).toLocaleString('es-ES',{maximumFractionDigits:1})+' M '+m;if(m==='IDR'&&a>=1e4)return (v/1e3).toLocaleString('es-ES',{maximumFractionDigits:0})+'k IDR';const ent=m==='IDR'||Number.isInteger(v);return v.toLocaleString('de-DE',{style:'currency',currency:m,minimumFractionDigits:ent?0:2,maximumFractionDigits:ent?0:2})};
 const eur=v=>Math.round(v).toLocaleString('de-DE')+' €';   // de-DE agrupa también los miles de 4 cifras (2.500)
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -10,13 +10,36 @@ const fac=m=>m.facturado!=null?m.facturado:m.importe;
 
 function pintarCats(){$('aCat').innerHTML=CATS[tipo].map(c=>`<option value="${c}">${cap(c)}</option>`).join('');$('aFac').hidden=tipo!=='ingreso'}
 async function cargar(){
-  const pedido=uid; const d=new Date(); d.setMonth(d.getMonth()-11); d.setDate(1);
+  const pedido=uid; suscribir(); const d=new Date(); d.setMonth(d.getMonth()-11); d.setDate(1);
   const desde=iso(d)<mes+'-01'?iso(d):mes+'-01';
   const {data,error}=await SB.from('jabner_movimientos').select('id,fecha,tipo,importe,facturado,moneda,categoria,concepto,origen')
     .eq('profile_id',pedido).gte('fecha',desde).order('fecha',{ascending:false}).order('created_at',{ascending:false});
   if(pedido!==uid||fallo(error)) return;
   todos=data.map(m=>({...m,importe:Number(m.importe),facturado:m.facturado==null?null:Number(m.facturado)})); render();
 }
+/* Tiempo real: cada movimiento nuevo (WhatsApp o la otra persona) entra al momento, con su animación. */
+const quieto=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animarCifra(el,de,a){
+  if(!el) return; const st=el.querySelector('strong'); el.classList.remove('pulso'); void el.offsetWidth; el.classList.add('pulso');
+  if(quieto()) return; const t0=performance.now(), dur=700;
+  const paso=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); st.textContent=dinero(de+(a-de)*e); if(k<1) requestAnimationFrame(paso); else st.textContent=dinero(a)};
+  requestAnimationFrame(paso);
+}
+function suscribir(){
+  if(!uid||canalUid===uid) return;
+  if(canal) SB.removeChannel(canal);
+  canalUid=uid;
+  canal=SB.channel('mov-'+uid).on('postgres_changes',{event:'*',schema:'public',table:'jabner_movimientos',filter:'profile_id=eq.'+uid},p=>{
+    if(p.eventType==='INSERT'&&p.new){
+      const m=p.new; recien.add(m.id); setTimeout(()=>recien.delete(m.id),4000);
+      if(m.fecha&&!m.fecha.startsWith(mes)&&m.fecha.startsWith(hoy().slice(0,7))) mes=m.fecha.slice(0,7);
+      const ing=m.tipo==='ingreso', txt=`${ing?'Ingreso':'Gasto'} nuevo${m.origen==='whatsapp'?' por WhatsApp':''}: ${ing?'+':'−'}${dinero(Number(m.importe),m.moneda)}${m.concepto?' · '+m.concepto:''}`;
+      if(typeof aviso==='function') aviso(txt);
+    }
+    cargar();
+  }).subscribe();
+}
+
 function porMes(){
   const r={};
   for(const m of todos){ if(m.moneda!=='EUR') continue; const k=m.fecha.slice(0,7), o=r[k]||={f:0,i:0,g:0};
@@ -30,8 +53,11 @@ function render(){
   const movs=todos.filter(m=>m.fecha.startsWith(mes)), e=movs.filter(m=>m.moneda==='EUR');
   const ing=e.filter(m=>m.tipo==='ingreso'), gas=e.filter(m=>m.tipo==='gasto');
   const tI=ing.reduce((s,m)=>s+m.importe,0), tF=ing.reduce((s,m)=>s+fac(m),0), tG=gas.reduce((s,m)=>s+m.importe,0), bal=tI-tG;
-  $('fTotales').innerHTML=[['Facturado',dinero(tF),''],['Ingresos',dinero(tI),'ing'],['Gastos',dinero(tG),'gas'],['Balance',dinero(bal),bal<0?'neg':'pos']]
-    .map(([n,v,c])=>`<div class="fk ${c}"><small>${n}</small><strong>${v}</strong></div>`).join('');
+  const K=[['f','Facturado',tF,''],['i','Ingresos',tI,'ing'],['g','Gastos',tG,'gas'],['b','Balance',bal,bal<0?'neg':'pos']];
+  const clave=uid+mes;
+  $('fTotales').innerHTML=K.map(([k,n,v,c])=>`<div class="fk ${c}" data-k="${k}"><small>${n}</small><strong>${dinero(v)}</strong></div>`).join('');
+  if(previo.clave===clave) K.forEach(([k,,v])=>{const a=previo[k]; if(a!=null&&Math.abs(a-v)>0.004) animarCifra($('fTotales').querySelector(`[data-k="${k}"]`),a,v)});
+  previo={clave}; K.forEach(([k,,v])=>previo[k]=v);
   const otras={}; for(const m of movs) if(m.moneda!=='EUR'){const o=otras[m.moneda]||={i:0,g:0}; o[m.tipo==='ingreso'?'i':'g']+=m.importe}
   const ot=Object.entries(otras); $('fOtras').hidden=!ot.length;
   $('fOtras').textContent=ot.map(([k,o])=>`${k}: ${o.i?'+'+dinero(o.i,k)+' ':''}${o.g?'−'+dinero(o.g,k):''}`).join(' · ');
@@ -39,8 +65,8 @@ function render(){
   $('nMov').textContent=movs.length;
   const fila=m=>{const wa=m.origen==='whatsapp'?'<span class="wa">WA</span>':'', mon=m.moneda!=='EUR';
     return m.tipo==='ingreso'
-      ? `<tr><td class="c">${esc(m.concepto||'Ingreso')}${wa}</td><td class="n muted">${m.facturado!=null?dinero(m.facturado,m.moneda):''}</td><td class="n ing">${dinero(m.importe,m.moneda)}</td><td><button type="button" data-del="${m.id}" aria-label="Borrar">×</button></td></tr>`
-      : `<tr><td class="c">${esc(m.concepto||cap(m.categoria))}${wa}</td><td class="cat-c muted">${cap(esc(m.categoria))}</td><td class="n">${dinero(m.importe,m.moneda)}</td><td><button type="button" data-del="${m.id}" aria-label="Borrar">×</button></td></tr>`};
+      ? `<tr data-id="${m.id}" class="${recien.has(m.id)?'entra':''}"><td class="c">${esc(m.concepto||'Ingreso')}${wa}</td><td class="n muted">${m.facturado!=null?dinero(m.facturado,m.moneda):''}</td><td class="n ing">${dinero(m.importe,m.moneda)}</td><td><button type="button" data-del="${m.id}" aria-label="Borrar">×</button></td></tr>`
+      : `<tr data-id="${m.id}" class="${recien.has(m.id)?'entra':''}"><td class="c">${esc(m.concepto||cap(m.categoria))}${wa}</td><td class="cat-c muted">${cap(esc(m.categoria))}</td><td class="n">${dinero(m.importe,m.moneda)}</td><td><button type="button" data-del="${m.id}" aria-label="Borrar">×</button></td></tr>`};
   const vacio=t=>`<tr><td colspan="4" class="muted vacio">${t}</td></tr>`;
   $('hIng').innerHTML=movs.filter(m=>m.tipo==='ingreso').map(fila).join('')||vacio('Sin ingresos este mes.');
   $('hGas').innerHTML=movs.filter(m=>m.tipo==='gasto').map(fila).join('')||vacio('Sin gastos este mes.');

@@ -128,7 +128,7 @@ def check(cond, msg):
 def abrir(ctx, fake, ruta):
     pg = ctx.new_page(); errores = []
     pg.on("pageerror", lambda e: errores.append(str(e)))
-    pg.on("console", lambda m: errores.append(m.text) if m.type == "error" and "Failed to load resource" not in m.text else None)
+    pg.on("console", lambda m: errores.append(m.text) if m.type == "error" and "Failed to load resource" not in m.text and "WebSocket" not in m.text else None)
     pg.route(WEB + "/**", servir); pg.route(SUPA + "/**", fake)
     pg.clock.set_fixed_time(HOY + "T10:00:00")
     pg.add_init_script(f"localStorage.setItem('recomp.llave','{LLAVE}');localStorage.setItem('recomp.perfil','ahmed')")
