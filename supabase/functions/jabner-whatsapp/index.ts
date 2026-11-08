@@ -78,7 +78,7 @@ export function interpretar(texto: string) {
     if (tipo === "gasto" && (cat === "trud" || cat === "ventas" || cat === "inversiones")) continue;
     if (palabras.some((p) => t.includes(p))) { categoria = cat; break; }
   }
-  const concepto = t.replace(/\b(en|de|por|para|el|la|los|las|un|una)\b/g, " ").replace(/\s+/g, " ").trim();
+  const concepto = t.replace(/\b(en|de|por|para|el|la|los|las|un|una)\b/g, " ").replace(/\s+/g, " ").trim().replace(/^[-−–+:,.\s]+/, "");
   if (facturado != null && !(facturado > 0 && facturado !== importe)) facturado = null;
   if (tipo !== "ingreso") facturado = null;
   return { tipo, importe: Math.round(importe * 100) / 100, facturado: facturado == null ? null : Math.round(facturado * 100) / 100, moneda, categoria, concepto: concepto ? concepto.charAt(0).toUpperCase() + concepto.slice(1) : null, fecha };
