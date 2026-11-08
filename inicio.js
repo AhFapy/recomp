@@ -28,3 +28,7 @@ function pintarResumen(){
   $('conclus').innerHTML=cs.map(c=>`<li><i class="${c.tono}"></i><span>${esc(c.texto)}</span></li>`).join('')||'<li><span class="muted">Apunta unos días y aquí saldrá cómo vas.</span></li>';
 }
 jabner(async c=>{await Promise.all([cargar(c),Habitos.cargar(),Finanzas.cargar(),cargarResumen()]);pintarResumen()});
+/* Lo que entra por WhatsApp aparece solo: cada 20 s con la pestaña a la vista, y al volver a la ventana. */
+const refrescarFin=()=>{if(!uid||document.hidden)return;const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;Finanzas.cargar()};
+setInterval(refrescarFin,20000);
+addEventListener('focus',refrescarFin);
